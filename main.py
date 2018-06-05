@@ -79,4 +79,4 @@ def handle_index():
     return app.send_static_file("index.html")
 
 
-app.run()
+app.run('0.0.0.0')
