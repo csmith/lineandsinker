@@ -1,0 +1,5 @@
+flask
+requests
+lxml
+bs4
+python-jenkins
