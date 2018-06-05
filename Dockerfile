@@ -9,3 +9,5 @@ RUN chown -R sinker /var/code && \
     pip3 install -r requirements.txt
 
 USER sinker
+
+CMD [ "python", "./main.py" ]
