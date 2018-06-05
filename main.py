@@ -86,7 +86,7 @@ def handle_index():
     return app.send_static_file("index.html")
 
 
-@app.route("/hooks/gitea/<path:repo>/<hash>")
+@app.route("/hooks/gitea/<path:repo>/<hash>", methods=['POST'])
 def handle_hook_gitea(repo, hash):
     print(f"Received hook for repo {repo} with has {hash}")
     expected_hash = get_hook_key("gitea", repo)
