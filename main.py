@@ -86,23 +86,23 @@ def handle_index():
     return app.send_static_file("index.html")
 
 
-@app.route("/hooks/gitea/<path:repo>/<hash>", methods=['POST'])
+@app.route("/hooks/gitea/<path:repo>/<hash>", methods=["POST"])
 def handle_hook_gitea(repo, hash):
-    print(f"Received hook for repo {repo} with has {hash}")
+    app.logger.info(f"Received hook for repo {repo} with has {hash}")
     expected_hash = get_hook_key("gitea", repo)
     if hash != expected_hash:
-        print(f"Hash mismatch: expected {expected_hash}")
+        app.logger.info(f"Hash mismatch: expected {expected_hash}")
         abort(403)
 
     if repo not in repos:
-        print(f"Repository not found. Known repos: {repos.keys()}")
+        app.logger.info(f"Repository not found. Known repos: {repos.keys()}")
         abort(404)
 
     urls = repos[repo]
     for name, spec, url in jobs:
         if url in urls:
             # TODO: Check branches
-            print(f"Found matching job: {name} with URL {url}")
+            app.logger.info(f"Found matching job: {name} with URL {url}")
             jenkins_server.build_job(name)
 
     return "", 204
