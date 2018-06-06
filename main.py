@@ -130,6 +130,7 @@ def handle_docker_registry(hash):
         abort(403)
 
     app.logger.warn(f"Docker hub json: {request.get_json()}")
+    return "", 204
 
 
 app.run("0.0.0.0")
