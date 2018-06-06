@@ -1,8 +1,13 @@
 import os
 
-from .jenkins import Jenkins
+from .docker import Docker
 from .gitea import Gitea
+from .jenkins import Jenkins
 from .reportbot import ReportBot
+
+
+def docker_factory():
+    return Docker()
 
 
 def gitea_factory():
@@ -25,4 +30,9 @@ def reportbot_factory():
     )
 
 
-factories = {"gitea": gitea_factory, "jenkins": jenkins_factory}
+factories = {
+    "docker": docker_factory,
+    "gitea": gitea_factory,
+    "jenkins": jenkins_factory,
+    "reportbot": reportbot_factory,
+}
