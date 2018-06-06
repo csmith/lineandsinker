@@ -1,4 +1,5 @@
 import hashlib
+import socket
 
 import jenkins
 import requests
@@ -74,6 +75,19 @@ def get_gitea_repos():
     for repo in repos:
         maybe_install_gitea_hook(repo["full_name"])
         yield repo["full_name"], repo["ssh_url"], repo["clone_url"]
+
+
+def reportbot_announce(message):
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            host = os.environ["LAS_REPORTBOT_ADDRESS"].split(":")
+            sock.connect((host[0], int(host[1])))
+            sock.sendall(
+                f"{os.environ['LAS_REPORTBOT_PREFIX']} {message}\n".encode("utf-8")
+            )
+            app.logger.info(f"Report bot response: {sock.recv(512)}")
+    except Exception:
+        app.logger.exception("Unable to send report bot message")
 
 
 repos = dict((name, [ssh, clone]) for name, ssh, clone in get_gitea_repos())
