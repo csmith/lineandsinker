@@ -64,3 +64,13 @@ Environment variable | Description
 
 LaS can send messages to a ReportBot instance (sending plain text over a TCP
 connection with a specified prefix).
+
+## Contributing
+
+All code is formatted using [Black](https://github.com/ambv/black) with
+default settings. There is a [pre-commit](https://pre-commit.com/)
+config file to enable automatic black formatting on commit; to enable
+it simply:
+
+    pip install pre-commit
+    pre-commit install
