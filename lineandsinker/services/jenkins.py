@@ -1,4 +1,3 @@
-import os
 import jenkins
 from bs4 import BeautifulSoup
 
@@ -10,6 +9,7 @@ class Jenkins(Service):
     SCM_CLASS = "hudson.plugins.git.GitSCM"
 
     def __init__(self, url, username, password):
+        super().__init__("jenkins")
         self._server = jenkins.Jenkins(url, username=username, password=password)
 
     def get_jobs(self):
@@ -22,14 +22,3 @@ class Jenkins(Service):
 
     def build_job(self, name):
         self._server.build_job(name)
-
-
-def jenkins_factory():
-    return Jenkins(
-        os.environ["LAS_JENKINS_URL"],
-        os.environ["LAS_JENKINS_USER"],
-        os.environ["LAS_JENKINS_PASSWORD"],
-    )
-
-
-Service.add_factory(jenkins_factory)

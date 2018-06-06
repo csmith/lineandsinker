@@ -1,5 +1,3 @@
-import os
-
 from jsonref import requests
 
 from ..common import get_hook_url
@@ -8,6 +6,7 @@ from .service import Service
 
 class Gitea(Service):
     def __init__(self, url, token, install_hooks=False):
+        super().__init__("gitea")
         self._url = url
         self._token = token
         self._install_hooks = install_hooks
@@ -20,7 +19,7 @@ class Gitea(Service):
             yield repo["full_name"], repo["ssh_url"], repo["clone_url"]
 
     def _maybe_install_gitea_hook(self, project):
-        hook_url = get_hook_url("gitea", project)
+        hook_url = get_hook_url(self.type, project)
         path = f"repos/{project}/hooks"
         hooks = self._request("get", path).json()
 
@@ -48,10 +47,3 @@ class Gitea(Service):
             kwargs["params"] = {}
         kwargs["params"]["access_token"] = self._token
         return requests.request(method, f"{self._url}api/v1/{api_path}", **kwargs)
-
-
-def gitea_factory():
-    return Gitea(os.environ["LAS_GITEA_URL"], os.environ["LAS_GITEA_TOKEN"])
-
-
-Service.add_factory(gitea_factory)

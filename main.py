@@ -6,7 +6,7 @@ from functools import wraps
 from flask import Flask, abort, request, Response
 
 from lineandsinker.common import get_hook_key
-from lineandsinker.services import gitea, jenkins
+from lineandsinker.services import gitea_factory, jenkins_factory
 
 
 url_pattern = re.compile(
@@ -46,8 +46,8 @@ def reportbot_announce(message):
         app.logger.exception("Unable to send report bot message")
 
 
-jenkins_service = jenkins.jenkins_factory()
-gitea_service = gitea.gitea_factory()
+jenkins_service = jenkins_factory()
+gitea_service = gitea_factory()
 repos = dict((name, [ssh, clone]) for name, ssh, clone in gitea_service.get_repos())
 jobs = list(jenkins_service.get_jobs())
 app = Flask(__name__)
