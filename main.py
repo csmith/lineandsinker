@@ -1,11 +1,13 @@
 import hashlib
+import re
 import socket
+from functools import wraps
 
 import jenkins
 import requests
 import os
 from bs4 import BeautifulSoup
-from flask import Flask, abort, request
+from flask import Flask, abort, request, Response
 
 BASE_URL = os.environ["LAS_BASE_URL"]
 SECRET = os.environ["LAS_SECRET"]
@@ -24,6 +26,29 @@ def get_hook_key(service, identifier):
 
 def get_hook_url(service, identifier):
     return f"{BASE_URL}hooks/{service}/{identifier}/{get_hook_key(service, identifier)}"
+
+
+def authenticate(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        match = re.match(
+            "^/hooks/(?P<service>[^/]+)/(?P<identifier>.*)/(?P<key>[^/]+)$",
+            request.path,
+        )
+
+        if not match:
+            return Response("Bad request", 400)
+
+        expected_key = get_hook_key(match.group("service"), match.group("identifier"))
+        if expected_key != match.group("key"):
+            app.logger.info(
+                f"Bad request to {request.path}: expected key {expected_key}"
+            )
+            return Response("Invalid key", 403)
+
+        return f(*args, **kwargs)
+
+    return wrapper
 
 
 def get_jenkins_jobs():
@@ -101,12 +126,9 @@ def handle_index():
 
 
 @app.route("/hooks/gitea/<path:repo>/<hash>", methods=["POST"])
-def handle_hook_gitea(repo, hash):
-    app.logger.info(f"Received hook for repo {repo} with has {hash}")
-    expected_hash = get_hook_key("gitea", repo)
-    if hash != expected_hash:
-        app.logger.info(f"Hash mismatch: expected {expected_hash}")
-        abort(403)
+@authenticate
+def handle_hook_gitea(repo):
+    app.logger.info(f"Received hook for repo {repo}")
 
     if repo not in repos:
         app.logger.info(f"Repository not found. Known repos: {repos.keys()}")
@@ -139,12 +161,8 @@ def handle_hook_gitea(repo, hash):
 
 
 @app.route("/hooks/docker/registry/<hash>", methods=["GET", "POST"])
-def handle_docker_registry(hash):
-    expected_hash = get_hook_key("docker", "registry")
-    if hash != expected_hash:
-        app.logger.info(f"Hash mismatch: expected {expected_hash}")
-        abort(403)
-
+@authenticate
+def handle_docker_registry():
     for event in request.get_json()["events"]:
         if (
             event["action"] == "push"
