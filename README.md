@@ -59,11 +59,11 @@ start Jenkins jobs in response to other events.
 
 Environment variable | Description
 -------------------- | --------------------------------------------------------
- `LAS_REPORTBOT_ADDRESS` | The host:port combination to send messages to
- `LAS_REPORTBOT_PREFIX`  | The text to send to the socket before any messages (e.g. API key)
+ `LAS_REPORTBOT_URL` | The full URL to the report API endpoint
+ `LAS_REPORTBOT_KEY` | The authentication key to use
+ `LAS_REPORTBOT_CHANNEL` | The channel to send messages to
 
-LaS can send messages to a ReportBot instance (sending plain text over a TCP
-connection with a specified prefix).
+LaS can send messages to a ReportBot instance.
 
 ## Contributing
 

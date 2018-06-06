@@ -2,6 +2,7 @@ import os
 
 from .jenkins import Jenkins
 from .gitea import Gitea
+from .reportbot import ReportBot
 
 
 def gitea_factory():
@@ -13,6 +14,14 @@ def jenkins_factory():
         os.environ["LAS_JENKINS_URL"],
         os.environ["LAS_JENKINS_USER"],
         os.environ["LAS_JENKINS_PASSWORD"],
+    )
+
+
+def reportbot_factory():
+    return ReportBot(
+        os.environ["LAS_REPORTBOT_URL"],
+        os.environ["LAS_REPORTBOT_KEY"],
+        os.environ["LAS_REPORTBOT_CHANNEL"],
     )
 
 
