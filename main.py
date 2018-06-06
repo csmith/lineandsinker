@@ -1,105 +1,36 @@
-import hashlib
+import os
 import re
 import socket
 from functools import wraps
 
-import jenkins
-import requests
-import os
-from bs4 import BeautifulSoup
 from flask import Flask, abort, request, Response
 
-BASE_URL = os.environ["LAS_BASE_URL"]
-SECRET = os.environ["LAS_SECRET"]
+from lineandsinker.common import get_hook_key
+from lineandsinker.services import gitea, jenkins
 
-jenkins_server = jenkins.Jenkins(
-    os.environ["LAS_JENKINS_URL"],
-    username=os.environ["LAS_JENKINS_USER"],
-    password=os.environ["LAS_JENKINS_PASSWORD"],
+
+url_pattern = re.compile(
+    "^/hooks/(?P<service>[^/]+)/(?P<identifier>.*)/(?P<key>[^/]+)$"
 )
-
-
-def get_hook_key(service, identifier):
-    nonce = (service + SECRET + identifier).encode("ascii")
-    return hashlib.sha256(nonce).hexdigest()
-
-
-def get_hook_url(service, identifier):
-    return f"{BASE_URL}hooks/{service}/{identifier}/{get_hook_key(service, identifier)}"
 
 
 def authenticate(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        match = re.match(
-            "^/hooks/(?P<service>[^/]+)/(?P<identifier>.*)/(?P<key>[^/]+)$",
-            request.path,
-        )
+        path = request.path
+        match = url_pattern.match(path)
 
         if not match:
             return Response("Bad request", 400)
 
         expected_key = get_hook_key(match.group("service"), match.group("identifier"))
         if expected_key != match.group("key"):
-            app.logger.info(
-                f"Bad request to {request.path}: expected key {expected_key}"
-            )
+            app.logger.info(f"Bad request to {path}: expected key {expected_key}")
             return Response("Invalid key", 403)
 
         return f(*args, **kwargs)
 
     return wrapper
-
-
-def get_jenkins_jobs():
-    for job in jenkins_server.get_all_jobs():
-        config = BeautifulSoup(
-            jenkins_server.get_job_config(job["fullname"]), features="xml"
-        )
-        for git_config in config.find_all("scm", class_="hudson.plugins.git.GitSCM"):
-            branch_spec = git_config.find("branches").find("name").text
-            yield job["fullname"], branch_spec, git_config.find("url").text
-
-
-def gitea_request(method, api_path, **kwargs):
-    if "params" not in kwargs:
-        kwargs["params"] = {}
-    kwargs["params"]["access_token"] = os.environ["LAS_GITEA_TOKEN"]
-    return requests.request(
-        method, f"{os.environ['LAS_GITEA_URL']}api/v1/{api_path}", **kwargs
-    )
-
-
-def maybe_install_gitea_hook(project):
-    hook_url = get_hook_url("gitea", project)
-    path = f"repos/{project}/hooks"
-    hooks = gitea_request("get", path).json()
-
-    if hook_url not in [hook["config"]["url"] for hook in hooks]:
-        body = {
-            "active": True,
-            "config": {"content_type": "json", "url": hook_url},
-            "events": [
-                "create",
-                "delete",
-                "fork",
-                "push",
-                "issues",
-                "issue_comment",
-                "pull_request",
-                "repository",
-                "release",
-            ],
-            "type": "gitea",
-        }
-        gitea_request("post", path, json=body).json()
-
-
-def get_gitea_repos():
-    repos = gitea_request("get", f"user/repos").json()
-    for repo in repos:
-        maybe_install_gitea_hook(repo["full_name"])
-        yield repo["full_name"], repo["ssh_url"], repo["clone_url"]
 
 
 def reportbot_announce(message):
@@ -111,12 +42,14 @@ def reportbot_announce(message):
                 f"{os.environ['LAS_REPORTBOT_PREFIX']} {message}\n".encode("utf-8")
             )
             app.logger.info(f"Report bot response: {sock.recv(512)}")
-    except Exception:
+    except:
         app.logger.exception("Unable to send report bot message")
 
 
-repos = dict((name, [ssh, clone]) for name, ssh, clone in get_gitea_repos())
-jobs = list(get_jenkins_jobs())
+jenkins_service = jenkins.jenkins_factory()
+gitea_service = gitea.gitea_factory()
+repos = dict((name, [ssh, clone]) for name, ssh, clone in gitea_service.get_repos())
+jobs = list(jenkins_service.get_jobs())
 app = Flask(__name__)
 
 
@@ -140,7 +73,7 @@ def handle_hook_gitea(repo):
             if url in urls:
                 # TODO: Check branches
                 app.logger.info(f"Found matching job: {name} with URL {url}")
-                jenkins_server.build_job(name)
+                jenkins_service.build_job(name)
 
         data = request.get_json()
         if not data["repository"]["private"]:
