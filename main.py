@@ -4,7 +4,7 @@ from functools import wraps
 from flask import Flask, abort, request, Response
 
 from lineandsinker.common import get_hook_key
-from lineandsinker.services import gitea_factory, jenkins_factory, reportbot_factory
+from lineandsinker.services import services
 
 url_pattern = re.compile(
     "^/hooks/(?P<service>[^/]+)/(?P<identifier>.*)/(?P<key>[^/]+)$"
@@ -30,11 +30,8 @@ def authenticate(f):
     return wrapper
 
 
-jenkins_service = jenkins_factory()
-gitea_service = gitea_factory()
-reportbot_service = reportbot_factory()
-repos = dict((name, [ssh, clone]) for name, ssh, clone in gitea_service.get_repos())
-jobs = list(jenkins_service.get_jobs())
+repos = dict((name, [ssh, clone]) for name, ssh, clone in services["gitea"].get_repos())
+jobs = list(services["jenkins"].get_jobs())
 app = Flask(__name__)
 
 
@@ -58,7 +55,7 @@ def handle_hook_gitea(repo):
             if url in urls:
                 # TODO: Check branches
                 app.logger.info(f"Found matching job: {name} with URL {url}")
-                jenkins_service.build_job(name)
+                services["jenkins"].build_job(name)
 
         data = request.get_json()
         if not data["repository"]["private"]:
@@ -67,11 +64,11 @@ def handle_hook_gitea(repo):
             compare = data["compare_url"]
             pusher = data["pusher"]["login"]
 
-            reportbot_service.announce(
+            services["reportbot"].announce(
                 f"\002[git]\002 {pusher} pushed {commits} commit{'s' if commits != 1 else ''} to {repo}: {compare}"
             )
             for commit in data["commits"][:3]:
-                reportbot_service.announce(
+                services["reportbot"].announce(
                     f"\002[git]\002 {commit['id'][:10]}: {commit['message'][:100]}"
                 )
 
@@ -91,7 +88,7 @@ def handle_docker_registry():
             tag = event["target"]["tag"]
             host = event["request"]["host"]
             user = event["actor"]["name"]
-            reportbot_service.announce(
+            services["reportbot"].announce(
                 f"\002[registry]\002 New manifest pushed to {host}/{repo}:{tag} by {user}"
             )
 

@@ -30,9 +30,9 @@ def reportbot_factory():
     )
 
 
-factories = {
-    "docker": docker_factory,
-    "gitea": gitea_factory,
-    "jenkins": jenkins_factory,
-    "reportbot": reportbot_factory,
+services = {
+    "docker": docker_factory(),
+    "gitea": gitea_factory(),
+    "jenkins": jenkins_factory(),
+    "reportbot": reportbot_factory(),
 }
