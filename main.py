@@ -112,12 +112,28 @@ def handle_hook_gitea(repo, hash):
         app.logger.info(f"Repository not found. Known repos: {repos.keys()}")
         abort(404)
 
-    urls = repos[repo]
-    for name, spec, url in jobs:
-        if url in urls:
-            # TODO: Check branches
-            app.logger.info(f"Found matching job: {name} with URL {url}")
-            jenkins_server.build_job(name)
+    if request.headers.get("X-Gitea-Event") == "push":
+        urls = repos[repo]
+        for name, spec, url in jobs:
+            if url in urls:
+                # TODO: Check branches
+                app.logger.info(f"Found matching job: {name} with URL {url}")
+                jenkins_server.build_job(name)
+
+        data = request.get_json()
+        if not data["repository"]["private"]:
+            repo = data["repository"]["full_name"]
+            commits = len(data["commits"])
+            compare = data["compare_url"]
+            pusher = data["pusher"]["login"]
+
+            reportbot_announce(
+                f"\002[git]\002 {pusher} pushed {commits} commit{'s' if commits != 1 else ''} to {repo}: {compare}"
+            )
+            for commit in data["commits"][:3]:
+                reportbot_announce(
+                    f"\002[git]\002 {commit['id'][:10]}: {commit['message'][:100]}"
+                )
 
     return "", 204
 
