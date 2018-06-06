@@ -35,12 +35,19 @@ def get_jenkins_jobs():
             yield job["fullname"], branch_spec, git_config.find("url").text
 
 
+def gitea_request(method, api_path, **kwargs):
+    if "params" not in kwargs:
+        kwargs["params"] = {}
+    kwargs["params"]["access_token"] = os.environ["LAS_GITEA_TOKEN"]
+    return requests.request(
+        method, f"{os.environ['LAS_GITEA_URL']}api/v1/{api_path}", **kwargs
+    )
+
+
 def maybe_install_gitea_hook(project):
-    gitea_url = f"{os.environ['LAS_GITEA_URL']}api/v1/repos/{project}/hooks"
     hook_url = get_hook_url("gitea", project)
-    hooks = requests.get(
-        gitea_url, params={"access_token": os.environ["LAS_GITEA_TOKEN"]}
-    ).json()
+    path = f"repos/{project}/hooks"
+    hooks = gitea_request("get", path).json()
 
     if hook_url not in [hook["config"]["url"] for hook in hooks]:
         body = {
@@ -59,18 +66,11 @@ def maybe_install_gitea_hook(project):
             ],
             "type": "gitea",
         }
-        requests.post(
-            gitea_url,
-            json=body,
-            params={"access_token": "5b8de94a7201bc923e99813850327caf75b85e70"},
-        ).json()
+        gitea_request("post", path, json=body).json()
 
 
 def get_gitea_repos():
-    repos = requests.get(
-        f"{os.environ['LAS_GITEA_URL']}api/v1/user/repos",
-        params={"access_token": os.environ["LAS_GITEA_TOKEN"]},
-    ).json()
+    repos = gitea_request("get", f"user/repos").json()
     for repo in repos:
         maybe_install_gitea_hook(repo["full_name"])
         yield repo["full_name"], repo["ssh_url"], repo["clone_url"]
