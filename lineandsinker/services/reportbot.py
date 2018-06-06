@@ -11,7 +11,7 @@ class ReportBot(Service):
         self._channel = channel
 
     def announce(self, message):
-        requests.get(
+        requests.post(
             self._url,
             {"key": self._key, "command": f"CM {self._channel}", "args": message},
         )
