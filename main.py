@@ -5,7 +5,7 @@ import jenkins
 import requests
 import os
 from bs4 import BeautifulSoup
-from flask import Flask, abort
+from flask import Flask, abort, request
 
 BASE_URL = os.environ["LAS_BASE_URL"]
 SECRET = os.environ["LAS_SECRET"]
@@ -120,6 +120,16 @@ def handle_hook_gitea(repo, hash):
             jenkins_server.build_job(name)
 
     return "", 204
+
+
+@app.route("/hooks/docker/registry/<hash>", methods=["GET", "POST"])
+def handle_docker_registry(hash):
+    expected_hash = get_hook_key("docker", "registry")
+    if hash != expected_hash:
+        app.logger.info(f"Hash mismatch: expected {expected_hash}")
+        abort(403)
+
+    app.logger.warn(f"Docker hub json: {request.get_json()}")
 
 
 app.run("0.0.0.0")
