@@ -129,7 +129,20 @@ def handle_docker_registry(hash):
         app.logger.info(f"Hash mismatch: expected {expected_hash}")
         abort(403)
 
-    app.logger.warn(f"Docker hub json: {request.get_json()}")
+    for event in request.get_json()["events"]:
+        if (
+            event["action"] == "push"
+            and "vnd.docker.distribution.manifest" in event["target"]["mediaType"]
+            and "tag" in event["target"]
+        ):
+            repo = event["target"]["repository"]
+            tag = event["target"]["tag"]
+            host = event["request"]["host"]
+            user = event["actor"]["name"]
+            reportbot_announce(
+                f"\002[registry]\002 New manifest pushed to {host}/{repo}:{tag} by {user}"
+            )
+
     return "", 204
 
 
