@@ -30,6 +30,10 @@ from triggering hooks spuriously or maliciously.
 
 ## Supported services
 
+### Docker registry
+
+LaS accepts hooks from the docker registry. There are no configuration options.
+
 ### Gitea
 
 Environment variable | Description
