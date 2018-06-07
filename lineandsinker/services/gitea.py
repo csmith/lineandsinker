@@ -29,7 +29,7 @@ class Gitea(Service):
                 "type": "git.push",
                 "repo": {
                     "name": data["repository"]["full_name"],
-                    "public": data["repository"]["private"],
+                    "public": not data["repository"]["private"],
                     "urls": urls,
                 },
                 "commits": [
