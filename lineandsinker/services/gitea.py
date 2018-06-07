@@ -1,4 +1,4 @@
-from jsonref import requests
+import requests
 
 from ..common import get_hook_url
 from .service import Service
@@ -10,8 +10,37 @@ class Gitea(Service):
         self._url = url
         self._token = token
         self._install_hooks = install_hooks
+        self._repos = {}
 
-    def get_repos(self):
+    def refresh(self):
+        self._repos = dict(
+            (name, [ssh, clone]) for name, ssh, clone in self._get_repos()
+        )
+
+    def accept_hook(self, identifier, request):
+        if identifier not in self._repos:
+            return
+
+        if request.headers.get("X-Gitea-Event") == "push":
+            urls = self._repos[identifier]
+            data = request.get_json()
+
+            yield {
+                "type": "git.push",
+                "repo": {
+                    "name": data["repository"]["full_name"],
+                    "public": data["repository"]["private"],
+                    "urls": urls,
+                },
+                "commits": [
+                    {"id": c["id"][:10], "message": c["message"]}
+                    for c in data["commits"]
+                ],
+                "compare_url": data["compare_url"],
+                "user": data["pusher"]["login"],
+            }
+
+    def _get_repos(self):
         repos = self._request("get", f"user/repos").json()
         for repo in repos:
             if self._install_hooks:
