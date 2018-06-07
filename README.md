@@ -65,6 +65,10 @@ Environment variable | Description
 
 LaS can send messages to a ReportBot instance.
 
+### Slack
+
+LaS accepts Slack-style webhooks. There are no configuration options.
+
 ## Contributing
 
 All code is formatted using [Black](https://github.com/ambv/black) with

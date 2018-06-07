@@ -26,6 +26,10 @@ def handle_events(events):
             services["reportbot"].announce(
                 f"\002[registry]\002 New manifest pushed to {event['host']}/{event['repo']}:{event['tag']} by {event['user']}"
             )
+        elif event["type"] == "slack":
+            services["reportbot"].announce(
+                f"\002[{event['source']}]\002 {event['text']}"
+            )
 
 
 @app.route("/")

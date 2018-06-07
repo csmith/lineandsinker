@@ -4,6 +4,7 @@ from .docker import Docker
 from .gitea import Gitea
 from .jenkins import Jenkins
 from .reportbot import ReportBot
+from .slack import Slack
 
 
 def docker_factory():
@@ -30,9 +31,14 @@ def reportbot_factory():
     )
 
 
+def slack_factory():
+    return Slack()
+
+
 services = {
     "docker": docker_factory(),
     "gitea": gitea_factory(),
     "jenkins": jenkins_factory(),
     "reportbot": reportbot_factory(),
+    "slack": slack_factory(),
 }
