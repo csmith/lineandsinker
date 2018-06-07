@@ -12,7 +12,11 @@ def docker_factory():
 
 
 def gitea_factory():
-    return Gitea(os.environ["LAS_GITEA_URL"], os.environ["LAS_GITEA_TOKEN"])
+    return Gitea(
+        os.environ["LAS_GITEA_URL"],
+        os.environ["LAS_GITEA_TOKEN"],
+        install_hooks="LAS_GITEA_ADD_HOOKS" in os.environ,
+    )
 
 
 def jenkins_factory():

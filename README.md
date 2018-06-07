@@ -40,9 +40,10 @@ Environment variable | Description
 -------------------- | --------------------------------------------------------
  `LAS_GITEA_URL`     | Base URL of the Gitea instance to connect to
  `LAS_GITEA_TOKEN`   | Application token to use to authenticate to Gitea
+ `LAS_GITEA_ADD_HOOKS` | If present, automatically add hooks to all repos
 
-LaS automatically adds itself as a hook for all repositories it has access to
-using the given token.
+LaS accepts Gitea webhooks and can automatically add itself as a hook
+for all repositories it has access to using the given token.
 
 ### Jenkins
 
