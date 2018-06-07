@@ -18,9 +18,10 @@ def handle_events(events):
                     f"\002[git]\002 {event['user']} pushed {len(event['commits'])} commit{'s' if len(event['commits']) != 1 else ''} to {event['repo']['name']}: {event['compare_url']}"
                 )
 
-                for commit in event["commits"][:3]:
+                for commit in event["commits"][::-1][:3]:
+                    line = commit["message"].split("\n")[0][:100]
                     services["reportbot"].announce(
-                        f"\002[git]\002 {commit['id']}: {commit['message'][:100]}"
+                        f"\002[git]\002 {commit['id']}: {line}"
                     )
         elif event["type"] == "docker.push":
             services["reportbot"].announce(
