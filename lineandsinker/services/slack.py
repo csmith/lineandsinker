@@ -9,8 +9,8 @@ class Slack(Service):
 
     def accept_hook(self, identifier, request):
         if request.content_type == "application/json":
-            content = request.json()
+            content = request.json
         else:
-            content = json.loads(request.get_data()["payload"])
+            content = json.loads(request.form["payload"])
 
         yield {"type": f"slack", "source": identifier, "text": content["text"]}
