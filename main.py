@@ -46,7 +46,7 @@ def handle_hook(service, identifier, hash):
         app.logger.info(f"Unknown service {service}, known: {services.keys()}")
         abort(404)
 
-    handle_events(services[service].accept_hook(identifier, request))
+    handle_events(services[service].accept_hook(identifier, request) or [])
 
     return "", 204
 
