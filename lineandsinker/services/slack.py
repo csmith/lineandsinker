@@ -13,4 +13,8 @@ class Slack(Service):
         else:
             content = json.loads(request.form["payload"])
 
-        yield {"type": f"slack", "source": identifier, "text": content["text"]}
+        text = content["text"]
+        if "attachments" in content:
+            text += " " + " ".join(a["fallback"] for a in content["attachments"])
+
+        yield {"type": f"slack", "source": identifier, "text": text}
