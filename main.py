@@ -53,7 +53,7 @@ def handle_hook(service, identifier, hash):
 
     handle_events(services[service].accept_hook(identifier, request) or [])
 
-    return "", 204
+    return "", 200
 
 
 if __name__ == "__main__":
