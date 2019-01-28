@@ -2,6 +2,7 @@ import os
 
 from .docker import Docker
 from .gitea import Gitea
+from .irccat import IrcCat
 from .jenkins import Jenkins
 from .reportbot import ReportBot
 from .slack import Slack
@@ -18,6 +19,11 @@ def gitea_factory():
         install_hooks="LAS_GITEA_ADD_HOOKS" in os.environ,
     )
 
+def irccat_factory():
+    return IrcCat(
+        os.environ["LAS_IRCCAT_URL"],
+        os.environ["LAS_IRCCAT_CHANNEL"],
+    )
 
 def jenkins_factory():
     return Jenkins(
@@ -42,6 +48,7 @@ def slack_factory():
 services = {
     "docker": docker_factory(),
     "gitea": gitea_factory(),
+    "irccat": irccat_factory(),
     "jenkins": jenkins_factory(),
     "reportbot": reportbot_factory(),
     "slack": slack_factory(),

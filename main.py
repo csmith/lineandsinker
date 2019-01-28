@@ -14,21 +14,21 @@ def handle_events(events):
         if event["type"] == "git.push":
             services["jenkins"].build_job_by_scm_url(event["repo"]["urls"])
             if event["repo"]["public"]:
-                services["reportbot"].announce(
+                services["irccat"].announce(
                     f"\002[git]\002 {event['user']} pushed {len(event['commits'])} commit{'s' if len(event['commits']) != 1 else ''} to {event['repo']['name']}: {event['compare_url']}"
                 )
 
                 for commit in event["commits"][::-1][:3]:
                     line = commit["message"].split("\n")[0][:100]
-                    services["reportbot"].announce(
+                    services["irccat"].announce(
                         f"\002[git]\002 {commit['id']}: {line}"
                     )
         elif event["type"] == "docker.push":
-            services["reportbot"].announce(
+            services["irccat"].announce(
                 f"\002[registry]\002 New manifest pushed to {event['host']}/{event['repo']}:{event['tag']} by {event['user']}"
             )
         elif event["type"] == "slack":
-            services["reportbot"].announce(
+            services["irccat"].announce(
                 f"\002[{event['source']}]\002 {event['text']}"
             )
 
