@@ -14,5 +14,5 @@ class IrcCat(Service):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((self._host, self._port))
         for line in message.split("\n"):
-            s.sendall(bf"{self._channel} {line}\n")
+            s.sendall(f"{self._channel} {line}\n".encode())
         s.close()
