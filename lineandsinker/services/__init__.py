@@ -21,7 +21,8 @@ def gitea_factory():
 
 def irccat_factory():
     return IrcCat(
-        os.environ["LAS_IRCCAT_URL"],
+        os.environ["LAS_IRCCAT_HOST"],
+        int(os.environ["LAS_IRCCAT_PORT"]),
         os.environ["LAS_IRCCAT_CHANNEL"],
     )
 
