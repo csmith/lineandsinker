@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Line and Sinker Administration</title>
+</head>
+<body>
+    <h1>Determine hash</h1>
+    <form action="/admin/hash" method="post">
+        <label>Service: <input type="text" name="service"></label>
+        <label>Identifier: <input type="text" name="identifier"></label>
+        <input type="submit" value="Calculate">
+    </form>
+    <h1>Recent events</h1>
+    {% for item in events|reverse %}
+        <pre>{{ item|tojson(indent=4) }}</pre>
+    {% endfor %}
+</body>
+</html>

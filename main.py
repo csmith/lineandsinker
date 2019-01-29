@@ -1,4 +1,8 @@
-from flask import Flask, abort, request
+import os
+
+from collections import deque
+from flask import Flask, abort, request, Response, render_template
+from functools import wraps
 
 from lineandsinker.common import get_hook_key
 from lineandsinker.services import services
@@ -10,11 +14,13 @@ def refresh_services():
 
 
 refresh_services()
+history = deque(maxlen=100)
 app = Flask(__name__)
 
 
 def handle_events(events):
     for event in events:
+        history.append(event)
         if event["type"] == "git.push":
             services["jenkins"].build_job_by_scm_url(event["repo"]["urls"])
             if event["repo"]["public"]:
@@ -35,7 +41,7 @@ def handle_events(events):
 
 @app.route("/")
 def handle_index():
-    return app.send_static_file("index.html")
+    return render_template("index.html")
 
 
 @app.route("/hooks/<service>/<path:identifier>/<hash>", methods=["GET", "POST"])
@@ -44,16 +50,67 @@ def handle_hook(service, identifier, hash):
 
     expected_hash = get_hook_key(service, identifier)
     if hash != expected_hash:
+        handle_events(
+            [
+                {
+                    "type": "lineandsinker.badhash",
+                    "service": service,
+                    "hash": hash,
+                    "body": request.get_data(as_text=True),
+                }
+            ]
+        )
         app.logger.info(f"Hash not valid. Expected: {expected_hash}, got {hash}")
         abort(403)
 
     if service not in services:
+        handle_events(
+            [
+                {
+                    "type": "lineandsinker.badservice",
+                    "service": service,
+                    "known_services": list(services.keys()),
+                    "body": request.get_data(as_text=True),
+                }
+            ]
+        )
         app.logger.info(f"Unknown service {service}, known: {services.keys()}")
         abort(404)
 
     handle_events(services[service].accept_hook(identifier, request) or [])
 
     return "", 200
+
+
+if "LAS_ADMIN_PASSWORD" in os.environ:
+
+    def requires_auth(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            auth = request.authorization
+            if (
+                not auth
+                or auth.username != "admin"
+                or auth.password != os.environ["LAS_ADMIN_PASSWORD"]
+            ):
+                return Response(
+                    "Restricted resource",
+                    401,
+                    {"WWW-Authenticate": 'Basic realm="Login Required"'},
+                )
+            return f(*args, **kwargs)
+
+        return decorated
+
+    @app.route("/admin")
+    @requires_auth
+    def handle_admin():
+        return render_template("admin.html", events=history)
+
+    @app.route("/admin/hash", methods=["POST"])
+    @requires_auth
+    def handle_admin_hash():
+        return get_hook_key(request.form["service"], request.form["identifier"]), 200
 
 
 if __name__ == "__main__":

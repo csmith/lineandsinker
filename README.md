@@ -17,6 +17,7 @@ Environment variable | Description
 -------------------- | --------------------------------------------------------
  `LAS_BASE_URL`      | Base web-facing URL at which LaS is accessible, used to generate hook URLs
  `LAS_SECRET`        | Random string used to generate secure hook URLs
+ `LAS_ADMIN_PASSWORD`| Password to require for web-based admin functionality
 
 ### URL format
 
