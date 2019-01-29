@@ -3,9 +3,13 @@ from flask import Flask, abort, request
 from lineandsinker.common import get_hook_key
 from lineandsinker.services import services
 
-for service in services.values():
-    service.refresh()
 
+def refresh_services():
+    for service in services.values():
+        service.refresh()
+
+
+refresh_services()
 app = Flask(__name__)
 
 
@@ -20,17 +24,13 @@ def handle_events(events):
 
                 for commit in event["commits"][::-1][:3]:
                     line = commit["message"].split("\n")[0][:100]
-                    services["irccat"].announce(
-                        f"\002[git]\002 {commit['id']}: {line}"
-                    )
+                    services["irccat"].announce(f"\002[git]\002 {commit['id']}: {line}")
         elif event["type"] == "docker.push":
             services["irccat"].announce(
                 f"\002[registry]\002 New manifest pushed to {event['host']}/{event['repo']}:{event['tag']} by {event['user']}"
             )
         elif event["type"] == "slack":
-            services["irccat"].announce(
-                f"\002[{event['source']}]\002 {event['text']}"
-            )
+            services["irccat"].announce(f"\002[{event['source']}]\002 {event['text']}")
 
 
 @app.route("/")
