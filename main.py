@@ -42,7 +42,7 @@ def handle_events(events):
             if state == "FAILING":
                 state = f"\0034{state}\003"
             services["irccat"].announce(
-                f"{event['check']['metadata']['name']} is now \002{state}\002\n{event['check']['output']}",
+                f"`{event['check']['metadata']['name']}` is now \002{state}\002\n{event['check']['output']}",
                 "#sensu",
             )
 
