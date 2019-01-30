@@ -37,6 +37,14 @@ def handle_events(events):
             )
         elif event["type"] == "slack":
             services["irccat"].announce(f"\002[{event['source']}]\002 {event['text']}")
+        elif event["type"] == "sensu":
+            state = event["check"]["state"].upper()
+            if state == "FAILING":
+                state = f"\0034{state}\003"
+            services["irccat"].announce(
+                f"{event['check']['metadata']['name']} is now \002{state}\002\n{event['check']['output']}",
+                "#sensu",
+            )
 
 
 @app.route("/")

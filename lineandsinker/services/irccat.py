@@ -10,9 +10,9 @@ class IrcCat(Service):
         self._port = port
         self._channel = channel
 
-    def announce(self, message):
+    def announce(self, message, channel=None):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((self._host, self._port))
         for line in message.split("\n"):
-            s.sendall(f"{self._channel} {line}\n".encode())
+            s.sendall(f"{channel or self._channel} {line}\n".encode())
         s.close()

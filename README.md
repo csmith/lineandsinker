@@ -67,6 +67,10 @@ Environment variable | Description
 
 LaS can send messages to a ReportBot instance.
 
+### Sensu
+
+LaS accepts JSON events from Sensu. There are no configuration options.
+
 ### Slack
 
 LaS accepts Slack-style webhooks. There are no configuration options.

@@ -5,6 +5,7 @@ from .gitea import Gitea
 from .irccat import IrcCat
 from .jenkins import Jenkins
 from .reportbot import ReportBot
+from .sensu import Sensu
 from .slack import Slack
 
 services = {}
@@ -47,6 +48,11 @@ try:
         os.environ["LAS_REPORTBOT_KEY"],
         os.environ["LAS_REPORTBOT_CHANNEL"],
     )
+except:
+    pass
+
+try:
+    services["sensu"] = Sensu()
 except:
     pass
 
