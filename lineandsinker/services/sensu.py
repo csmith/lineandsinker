@@ -6,4 +6,4 @@ class Sensu(Service):
         super().__init__("sensu")
 
     def accept_hook(self, identifier, request):
-        yield {"type": "sensu", **request.json}
+        yield {"type": "sensu", **request.get_json(force=True)}
